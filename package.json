@@ -9,7 +9,9 @@
     "generate:ts": "tsx src/index.ts typescript",
     "generate:php": "tsx src/index.ts php",
     "typecheck": "tsc --noEmit",
+    "check:spec": "tsx scripts/ci/check-spec.ts",
     "audit:branding": "tsx scripts/audit-branding.ts",
+    "verify:artifacts": "tsx scripts/ci/verify-artifacts.ts",
     "sync:release": "tsx scripts/ci/sync-and-release.ts"
   },
   "devDependencies": {

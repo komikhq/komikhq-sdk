@@ -32,12 +32,12 @@ interface Config {
 }
 
 function loadConfig(): Config {
-  const githubToken = process.env.GITHUB_TOKEN;
+  const token = process.env.BOT_TOKEN || process.env.GITHUB_TOKEN;
   const targetRepo = process.env.TARGET_REPO;
   const sourceDir = process.env.SOURCE_DIR;
   const releaseVersion = process.env.RELEASE_VERSION || undefined;
 
-  if (!githubToken) throw new Error('Missing GITHUB_TOKEN');
+  if (!token) throw new Error('Missing GitHub App Token (BOT_TOKEN / GITHUB_TOKEN)');
   if (!targetRepo) throw new Error('Missing TARGET_REPO');
   if (!sourceDir) throw new Error('Missing SOURCE_DIR');
 
@@ -45,10 +45,10 @@ function loadConfig(): Config {
     throw new Error(`SOURCE_DIR "${sourceDir}" does not exist`);
   }
 
-  const bot = resolveBotIdentity(githubToken);
+  const bot = resolveBotIdentity(token);
 
   return {
-    githubToken,
+    githubToken: token,
     targetRepo,
     sourceDir,
     releaseVersion: releaseVersion || undefined,
@@ -79,7 +79,15 @@ function resolveBotIdentity(token: string): { name: string; email: string } {
     return { name: envName, email: envEmail };
   }
 
-  log('🤖', 'Resolving bot identity from GitHub App token...');
+  const botAppId = process.env.BOT_APP_ID;
+  if (botAppId) {
+    const name = process.env.BOT_NAME || 'komikhq-bot[bot]';
+    const email = `${botAppId}+${name}@users.noreply.github.com`;
+    log('👤', `Bot committer: ${name} <${email}>`);
+    return { name, email };
+  }
+
+  log('🤖', 'Resolving bot identity from GitHub App token via API...');
 
   const appRaw = run(
     `curl -s -f -H "Authorization: Bearer ${token}" -H "Accept: application/vnd.github+json" https://api.github.com/app`,

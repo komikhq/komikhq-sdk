@@ -43,8 +43,9 @@ jobs:
 
       - name: Sync & Release
         env:
-          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          BOT_TOKEN: ${{ steps.app-token.outputs.token }}
+          BOT_APP_ID: ${{ secrets.KOMIKHQ_BOT_APP_ID }}
           TARGET_REPO: "komikhq/komikhq-php"
           SOURCE_DIR: "out/php"
           RELEASE_VERSION: ${{ github.event.inputs.release_version }}
-        run: tsx scripts/ci/sync-and-release.ts
+        run: pnpm sync:release

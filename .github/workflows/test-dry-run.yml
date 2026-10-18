@@ -1,0 +1,66 @@
+name: Test & Dry-Run All Workflows
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      spec_url:
+        description: "OpenAPI Specification URL"
+        required: false
+        default: "https://api.komikhq.com/openapi.json"
+
+jobs:
+  test-spec-health:
+    name: Test OpenAPI Spec Health
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: "pnpm"
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate OpenAPI Spec Health
+        run: pnpm check:spec "${{ github.event.inputs.spec_url || 'https://api.komikhq.com/openapi.json' }}"
+
+  test-sdk-generation:
+    name: Dry-Run SDK Generation
+    needs: [test-spec-health]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [typescript, php]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: "pnpm"
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck Generator Codebase
+        run: pnpm typecheck
+
+      - name: Generate SDK (${{ matrix.target }})
+        run: pnpm generate ${{ matrix.target }} --spec "${{ github.event.inputs.spec_url || 'https://api.komikhq.com/openapi.json' }}"
+
+      - name: Audit Branding
+        run: pnpm audit:branding out/${{ matrix.target }}
+
+      - name: Verify Downstream Artifacts
+        run: pnpm verify:artifacts ${{ matrix.target }}
