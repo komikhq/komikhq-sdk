@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@11.25.0",
   "scripts": {
     "generate": "tsx src/index.ts",
     "generate:all": "tsx src/index.ts all",
