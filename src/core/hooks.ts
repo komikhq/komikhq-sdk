@@ -30,4 +30,30 @@ export function afterGenerate(target: GeneratorTarget): void {
   if (fs.existsSync(rootLicense)) {
     fs.copyFileSync(rootLicense, path.resolve(target.outputDir, "LICENSE"));
   }
+
+  // Write tailored .gitattributes (crucial for Composer export-ignore and clean git releases)
+  if (target.generator === "php") {
+    const phpGitAttributes = `# Gitattributes for KomikHQ PHP Client SDK
+# Exclude non-essential dev/test files when downloaded via Composer archive
+/.github export-ignore
+/.gitattributes export-ignore
+/.gitignore export-ignore
+/.travis.yml export-ignore
+/.php-cs-fixer.dist.php export-ignore
+/phpunit.xml.dist export-ignore
+/test export-ignore
+/docs export-ignore
+/git_push.sh export-ignore
+`;
+    fs.writeFileSync(path.resolve(target.outputDir, ".gitattributes"), phpGitAttributes);
+  } else if (target.generator === "typescript-fetch") {
+    const tsGitAttributes = `# Gitattributes for KomikHQ TypeScript Client SDK
+/.github export-ignore
+/.gitattributes export-ignore
+/.gitignore export-ignore
+/.npmignore export-ignore
+/docs export-ignore
+`;
+    fs.writeFileSync(path.resolve(target.outputDir, ".gitattributes"), tsGitAttributes);
+  }
 }

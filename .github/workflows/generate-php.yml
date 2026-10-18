@@ -8,10 +8,8 @@ on:
         required: false
         default: "https://api.komikhq.com/openapi.json"
       release_version:
-        description: "Release tag version (e.g. v1.0.0)"
+        description: "Release tag version to publish (e.g. v1.0.0, optional)"
         required: false
-  repository_dispatch:
-    types: [sync-sdk, sync-php]
 
 jobs:
   generate-php:
@@ -19,6 +17,14 @@ jobs:
     steps:
       - name: Checkout komikhq-sdk
         uses: actions/checkout@v4
+
+      - name: Generate GitHub App Token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.KOMIKHQ_BOT_APP_ID }}
+          private-key: ${{ secrets.KOMIKHQ_BOT_PRIVATE_KEY }}
+          owner: komikhq
 
       - name: Setup Node.js 24
         uses: actions/setup-node@v4
@@ -39,10 +45,24 @@ jobs:
       - name: Push to komikhq-php
         uses: cpina/github-action-push-to-another-repository@main
         env:
-          SSH_DEPLOY_KEY: ${{ secrets.SSH_DEPLOY_KEY_PHP }}
+          API_TOKEN_GITHUB: ${{ steps.app-token.outputs.token }}
         with:
           source-directory: "out/php"
           destination-github-username: "komikhq"
           destination-repository-name: "komikhq-php"
+          user-name: "komikhq-bot[bot]"
+          user-email: "${{ secrets.KOMIKHQ_BOT_APP_ID }}+komikhq-bot[bot]@users.noreply.github.com"
           target-branch: "main"
           commit-message: "chore(sdk): sync PHP SDK from OpenAPI spec [skip ci]"
+
+      - name: Create GitHub Release with Notes
+        if: ${{ github.event.inputs.release_version != '' }}
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          VERSION="${{ github.event.inputs.release_version }}"
+          echo "Creating release $VERSION on komikhq/komikhq-php..."
+          gh release create "$VERSION" \
+            --repo "komikhq/komikhq-php" \
+            --title "Release $VERSION" \
+            --generate-notes
