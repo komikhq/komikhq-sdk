@@ -8,7 +8,9 @@
     "generate:all": "tsx src/index.ts all",
     "generate:ts": "tsx src/index.ts typescript",
     "generate:php": "tsx src/index.ts php",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "audit:branding": "tsx scripts/audit-branding.ts",
+    "sync:release": "tsx scripts/ci/sync-and-release.ts"
   },
   "devDependencies": {
     "@openapitools/openapi-generator-cli": "^2.19.0",

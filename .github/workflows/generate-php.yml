@@ -8,17 +8,23 @@ on:
         required: false
         default: "https://api.komikhq.com/openapi.json"
       release_version:
-        description: "Release tag version to publish (e.g. v1.0.0, optional)"
+        description: "Release tag version (e.g. v1.0.0)"
         required: false
 
 jobs:
-  generate-php:
+  build-and-sync:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout komikhq-sdk
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Generate GitHub App Token
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: "pnpm"
+
+      - name: Generate Bot Token
         id: app-token
         uses: actions/create-github-app-token@v1
         with:
@@ -26,43 +32,19 @@ jobs:
           private-key: ${{ secrets.KOMIKHQ_BOT_PRIVATE_KEY }}
           owner: komikhq
 
-      - name: Setup Node.js 24
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v3
-
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Generate PHP SDK
-        run: |
-          SPEC_URL="${{ github.event.inputs.spec_url || 'https://api.komikhq.com/openapi.json' }}"
-          pnpm generate php --spec "$SPEC_URL"
+      - name: Generate SDK
+        run: pnpm generate php --spec "${{ github.event.inputs.spec_url || 'https://api.komikhq.com/openapi.json' }}"
 
-      - name: Push to komikhq-php
-        uses: cpina/github-action-push-to-another-repository@main
-        env:
-          API_TOKEN_GITHUB: ${{ steps.app-token.outputs.token }}
-        with:
-          source-directory: "out/php"
-          destination-github-username: "komikhq"
-          destination-repository-name: "komikhq-php"
-          user-name: "komikhq-bot[bot]"
-          user-email: "${{ secrets.KOMIKHQ_BOT_APP_ID }}+komikhq-bot[bot]@users.noreply.github.com"
-          target-branch: "main"
-          commit-message: "chore(sdk): sync PHP SDK from OpenAPI spec [skip ci]"
+      - name: Audit Branding
+        run: pnpm audit:branding
 
-      - name: Create GitHub Release with Notes
-        if: ${{ github.event.inputs.release_version != '' }}
+      - name: Sync & Release
         env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: |
-          VERSION="${{ github.event.inputs.release_version }}"
-          echo "Creating release $VERSION on komikhq/komikhq-php..."
-          gh release create "$VERSION" \
-            --repo "komikhq/komikhq-php" \
-            --title "Release $VERSION" \
-            --generate-notes
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          TARGET_REPO: "komikhq/komikhq-php"
+          SOURCE_DIR: "out/php"
+          RELEASE_VERSION: ${{ github.event.inputs.release_version }}
+        run: tsx scripts/ci/sync-and-release.ts
