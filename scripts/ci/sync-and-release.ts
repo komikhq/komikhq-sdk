@@ -45,13 +45,15 @@ function loadConfig(): Config {
     throw new Error(`SOURCE_DIR "${sourceDir}" does not exist`);
   }
 
+  const bot = resolveBotIdentity(githubToken);
+
   return {
     githubToken,
     targetRepo,
     sourceDir,
     releaseVersion: releaseVersion || undefined,
-    botName: 'komikhq-bot[bot]',
-    botEmail: '198635102+komikhq-bot[bot]@users.noreply.github.com',
+    botName: bot.name,
+    botEmail: bot.email,
   };
 }
 
@@ -68,6 +70,57 @@ function run(cmd: string, opts?: { cwd?: string; silent?: boolean }): string {
 
 function log(emoji: string, message: string) {
   console.log(`${emoji}  ${message}`);
+}
+
+function resolveBotIdentity(token: string): { name: string; email: string } {
+  const envName = process.env.GIT_USER_NAME;
+  const envEmail = process.env.GIT_USER_EMAIL;
+  if (envName && envEmail) {
+    return { name: envName, email: envEmail };
+  }
+
+  log('🤖', 'Resolving bot identity from GitHub App token...');
+
+  const appRaw = run(
+    `curl -s -f -H "Authorization: Bearer ${token}" -H "Accept: application/vnd.github+json" https://api.github.com/app`,
+    { silent: true }
+  );
+
+  let appData: { slug?: string };
+  try {
+    appData = JSON.parse(appRaw);
+  } catch {
+    throw new Error(`Failed to parse GitHub App response: ${appRaw}`);
+  }
+
+  if (!appData.slug) {
+    throw new Error('GitHub App API response did not contain a valid "slug"');
+  }
+
+  const slug = appData.slug;
+
+  const userRaw = run(
+    `curl -s -f -H "Accept: application/vnd.github+json" https://api.github.com/users/${slug}[bot]`,
+    { silent: true }
+  );
+
+  let userData: { id?: number };
+  try {
+    userData = JSON.parse(userRaw);
+  } catch {
+    throw new Error(`Failed to parse bot user info for ${slug}[bot]: ${userRaw}`);
+  }
+
+  if (!userData.id) {
+    throw new Error(`Could not find a valid user ID for bot "${slug}[bot]"`);
+  }
+
+  log('👤', `Bot committer: ${slug}[bot] <${userData.id}+${slug}[bot]@users.noreply.github.com>`);
+
+  return {
+    name: `${slug}[bot]`,
+    email: `${userData.id}+${slug}[bot]@users.noreply.github.com`,
+  };
 }
 
 // ─── Steps ───────────────────────────────────────────────────────
