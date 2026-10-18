@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { ROOT_DIR, type GeneratorTarget } from "../config/index.ts";
+import { renderTemplateFile } from "./template-renderer.ts";
 
 /**
  * Pre-generation hook: runs before openapi-generator executes.
@@ -55,5 +56,22 @@ export function afterGenerate(target: GeneratorTarget): void {
 /docs export-ignore
 `;
     fs.writeFileSync(path.resolve(target.outputDir, ".gitattributes"), tsGitAttributes);
+
+    // Render downstream publish workflow using Mustache template
+    const publishTemplate = path.resolve(
+      ROOT_DIR,
+      "templates/typescript-fetch/publish-npm.mustache"
+    );
+    const publishWorkflowOut = path.resolve(
+      target.outputDir,
+      ".github/workflows/publish-npm.yml"
+    );
+
+    if (fs.existsSync(publishTemplate)) {
+      renderTemplateFile(publishTemplate, publishWorkflowOut, {
+        nodeVersion: 24,
+        npmPackageName: "@komikhq/komikhq-typescript",
+      });
+    }
   }
 }

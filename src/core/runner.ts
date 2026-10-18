@@ -51,6 +51,7 @@ export async function runGenerator(
     target.generator,
     "-o",
     target.outputDir,
+    "--skip-validate-spec",
   ];
 
   if (target.gitHost) {
