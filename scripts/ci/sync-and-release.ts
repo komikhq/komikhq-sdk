@@ -29,15 +29,17 @@ interface Config {
   releaseVersion?: string;
   botName: string;
   botEmail: string;
+  dryRun: boolean;
 }
 
 function loadConfig(): Config {
-  const token = process.env.BOT_TOKEN || process.env.GITHUB_TOKEN;
+  const dryRun = process.env.DRY_RUN === 'true';
+  const token = process.env.BOT_TOKEN || (dryRun ? 'dry-run-token' : '');
   const targetRepo = process.env.TARGET_REPO;
   const sourceDir = process.env.SOURCE_DIR;
   const releaseVersion = process.env.RELEASE_VERSION || undefined;
 
-  if (!token) throw new Error('Missing GitHub App Token (BOT_TOKEN / GITHUB_TOKEN)');
+  if (!token) throw new Error('Missing GitHub App Token (BOT_TOKEN)');
   if (!targetRepo) throw new Error('Missing TARGET_REPO');
   if (!sourceDir) throw new Error('Missing SOURCE_DIR');
 
@@ -54,6 +56,7 @@ function loadConfig(): Config {
     releaseVersion: releaseVersion || undefined,
     botName: bot.name,
     botEmail: bot.email,
+    dryRun,
   };
 }
 
@@ -84,6 +87,13 @@ function resolveBotIdentity(token: string): { name: string; email: string } {
     const name = process.env.BOT_NAME || 'komikhq-bot[bot]';
     const email = `${botAppId}+${name}@users.noreply.github.com`;
     log('👤', `Bot committer: ${name} <${email}>`);
+    return { name, email };
+  }
+
+  if (process.env.DRY_RUN === 'true') {
+    const name = process.env.BOT_NAME || 'komikhq-bot[bot]';
+    const email = 'dry-run@komikhq.local';
+    log('👤', `Dry-run committer: ${name} <${email}>`);
     return { name, email };
   }
 
@@ -136,6 +146,15 @@ function resolveBotIdentity(token: string): { name: string; email: string } {
 function cloneTargetRepo(config: Config): string {
   const workDir = join(tmpdir(), `sdk-sync-${Date.now()}`);
   mkdirSync(workDir, { recursive: true });
+  const repoDir = join(workDir, 'repo');
+
+  if (config.dryRun) {
+    log('🧪', `[DRY-RUN] Initializing local repository for ${config.targetRepo}...`);
+    mkdirSync(repoDir, { recursive: true });
+    run('git init', { cwd: repoDir });
+    run(`git remote add origin https://github.com/${config.targetRepo}.git`, { cwd: repoDir });
+    return repoDir;
+  }
 
   const cloneUrl = `https://x-access-token:${config.githubToken}@github.com/${config.targetRepo}.git`;
 
@@ -146,13 +165,12 @@ function cloneTargetRepo(config: Config): string {
   } catch {
     // Repository might be empty (first push)
     log('⚠️', 'Clone failed — initializing fresh repository...');
-    const repoDir = join(workDir, 'repo');
     mkdirSync(repoDir, { recursive: true });
     run('git init', { cwd: repoDir });
     run(`git remote add origin "${cloneUrl}"`, { cwd: repoDir });
   }
 
-  return join(workDir, 'repo');
+  return repoDir;
 }
 
 function syncFiles(config: Config, repoDir: string) {
@@ -191,6 +209,11 @@ function commitAndPush(config: Config, repoDir: string): boolean {
 
   run(`git commit -m "${commitMsg}"`, { cwd: repoDir });
 
+  if (config.dryRun) {
+    log('🧪', `[DRY-RUN] Commit created successfully ("${commitMsg}"). Skipping push to ${config.targetRepo}.`);
+    return true;
+  }
+
   log('🚀', `Pushing to ${config.targetRepo}...`);
   run('git push origin HEAD --force', { cwd: repoDir });
 
@@ -199,6 +222,11 @@ function commitAndPush(config: Config, repoDir: string): boolean {
 
 function createRelease(config: Config, repoDir: string) {
   if (!config.releaseVersion) return;
+
+  if (config.dryRun) {
+    log('🧪', `[DRY-RUN] Skipping tag & release creation for ${config.releaseVersion}.`);
+    return;
+  }
 
   log('🏷️', `Creating tag ${config.releaseVersion}...`);
   run(`git tag "${config.releaseVersion}"`, { cwd: repoDir });

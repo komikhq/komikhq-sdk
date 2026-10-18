@@ -64,3 +64,12 @@ jobs:
 
       - name: Verify Downstream Artifacts
         run: pnpm verify:artifacts ${{ matrix.target }}
+
+      - name: Dry-Run Sync & Release
+        env:
+          DRY_RUN: "true"
+          TARGET_REPO: "komikhq/komikhq-${{ matrix.target }}"
+          SOURCE_DIR: "out/${{ matrix.target }}"
+          BOT_APP_ID: "000000"
+          BOT_NAME: "komikhq-bot[bot]"
+        run: pnpm sync:release
