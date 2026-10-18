@@ -36,6 +36,10 @@ async function main() {
 
   if (httpStatus !== '200') {
     console.error(`❌ OpenAPI endpoint returned HTTP status ${httpStatus} (expected 200)`);
+    try {
+      const dump = run(`curl -s -i -A "${BROWSER_USER_AGENT}" -H "Accept: application/json, text/plain, */*" "${specUrl}" | head -n 30`);
+      console.error(`Response details:\n${dump}`);
+    } catch {}
     process.exit(1);
   }
 
