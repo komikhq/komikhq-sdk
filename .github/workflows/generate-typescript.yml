@@ -1,0 +1,48 @@
+name: Generate & Sync TypeScript SDK
+
+on:
+  workflow_dispatch:
+    inputs:
+      spec_url:
+        description: "OpenAPI Specification URL"
+        required: false
+        default: "https://api.komikhq.com/openapi.json"
+      release_version:
+        description: "Release tag version (e.g. v1.0.0)"
+        required: false
+  repository_dispatch:
+    types: [sync-sdk, sync-typescript]
+
+jobs:
+  generate-typescript:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout komikhq-sdk
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate TypeScript SDK
+        run: |
+          SPEC_URL="${{ github.event.inputs.spec_url || 'https://api.komikhq.com/openapi.json' }}"
+          pnpm generate typescript --spec "$SPEC_URL"
+
+      - name: Push to komikhq-typescript
+        uses: cpina/github-action-push-to-another-repository@main
+        env:
+          SSH_DEPLOY_KEY: ${{ secrets.SSH_DEPLOY_KEY_TYPESCRIPT }}
+        with:
+          source-directory: "out/typescript"
+          destination-github-username: "komikhq"
+          destination-repository-name: "komikhq-typescript"
+          target-branch: "main"
+          commit-message: "chore(sdk): sync TypeScript SDK from OpenAPI spec [skip ci]"

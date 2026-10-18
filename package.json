@@ -1,0 +1,19 @@
+{
+  "name": "@komikhq/sdk-generator",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "generate": "tsx src/index.ts",
+    "generate:all": "tsx src/index.ts all",
+    "generate:ts": "tsx src/index.ts typescript",
+    "generate:php": "tsx src/index.ts php",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@openapitools/openapi-generator-cli": "^2.19.0",
+    "@types/node": "^22.13.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
+}

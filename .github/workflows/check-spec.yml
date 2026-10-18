@@ -1,0 +1,23 @@
+name: Check OpenAPI Spec Health
+
+on:
+  schedule:
+    - cron: "0 0 * * *" # Daily check
+  workflow_dispatch:
+
+jobs:
+  check-spec:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch OpenAPI Specification
+        run: |
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://api.komikhq.com/openapi.json)
+          echo "OpenAPI endpoint response code: $HTTP_STATUS"
+          if [ "$HTTP_STATUS" -ne 200 ]; then
+            echo "::error::OpenAPI endpoint returned HTTP $HTTP_STATUS instead of 200"
+            exit 1
+          fi
+
+      - name: Validate JSON Schema
+        run: |
+          curl -sS https://api.komikhq.com/openapi.json | jq .openapi
