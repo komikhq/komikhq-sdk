@@ -13,7 +13,7 @@
 import { execSync } from 'node:child_process';
 
 const DEFAULT_SPEC_URL = 'https://api.komikhq.com/openapi.json';
-const BROWSER_USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
+const KOMIKHQ_BOT_USER_AGENT = 'KomikHQ-Bot';
 
 function run(cmd: string): string {
   return execSync(cmd, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
@@ -27,7 +27,7 @@ async function main() {
   // 1. Check HTTP Status Code
   let httpStatus: string;
   try {
-    httpStatus = run(`curl -s -o /dev/null -w "%{http_code}" -A "${BROWSER_USER_AGENT}" "${specUrl}"`);
+    httpStatus = run(`curl -s -o /dev/null -w "%{http_code}" -A "${KOMIKHQ_BOT_USER_AGENT}" "${specUrl}"`);
   } catch (err: unknown) {
     const error = err as Error;
     console.error(`❌ Network error while reaching spec URL: ${error.message}`);
@@ -37,9 +37,9 @@ async function main() {
   if (httpStatus !== '200') {
     console.error(`❌ OpenAPI endpoint returned HTTP status ${httpStatus} (expected 200)`);
     try {
-      const dump = run(`curl -s -i -A "${BROWSER_USER_AGENT}" -H "Accept: application/json, text/plain, */*" "${specUrl}" | head -n 30`);
+      const dump = run(`curl -s -i -A "${KOMIKHQ_BOT_USER_AGENT}" -H "Accept: application/json, text/plain, */*" "${specUrl}" | head -n 30`);
       console.error(`Response details:\n${dump}`);
-    } catch {}
+    } catch { }
     process.exit(1);
   }
 
@@ -48,7 +48,7 @@ async function main() {
   // 2. Fetch and Validate JSON Structure
   let rawJson: string;
   try {
-    rawJson = run(`curl -sS -A "${BROWSER_USER_AGENT}" "${specUrl}"`);
+    rawJson = run(`curl -sS -A "${KOMIKHQ_BOT_USER_AGENT}" "${specUrl}"`);
   } catch (err: unknown) {
     const error = err as Error;
     console.error(`❌ Failed to fetch OpenAPI payload: ${error.message}`);

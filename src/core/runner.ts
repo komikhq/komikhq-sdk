@@ -39,9 +39,8 @@ export async function runGenerator(
   let resolvedSpec = specUrl;
   if (specUrl.startsWith("http://") || specUrl.startsWith("https://")) {
     const tempSpecPath = path.resolve(ROOT_DIR, ".openapi-spec.json");
-    console.log(`>> Fetching OpenAPI spec with browser User-Agent...`);
-    const userAgent =
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+    console.log(`>> Fetching OpenAPI spec with KomikHQ-Bot User-Agent...`);
+    const userAgent = "KomikHQ-Bot";
     const res = await fetch(specUrl, {
       headers: {
         "User-Agent": userAgent,
