@@ -36,6 +36,26 @@ export async function runGenerator(
   // Execute pre-generation lifecycle hooks
   beforeGenerate(target);
 
+  let resolvedSpec = specUrl;
+  if (specUrl.startsWith("http://") || specUrl.startsWith("https://")) {
+    const tempSpecPath = path.resolve(ROOT_DIR, ".openapi-spec.json");
+    console.log(`>> Fetching OpenAPI spec with browser User-Agent...`);
+    const userAgent =
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+    const res = await fetch(specUrl, {
+      headers: {
+        "User-Agent": userAgent,
+        Accept: "application/json, text/plain, */*",
+      },
+    });
+    if (!res.ok) {
+      throw new Error(`Failed to download OpenAPI spec from ${specUrl}: HTTP ${res.status} ${res.statusText}`);
+    }
+    const specContent = await res.text();
+    fs.writeFileSync(tempSpecPath, specContent, "utf-8");
+    resolvedSpec = tempSpecPath;
+  }
+
   const props = Object.entries(target.additionalProperties)
     .map(([key, val]) => `${key}=${val}`)
     .join(",");
@@ -46,7 +66,7 @@ export async function runGenerator(
   const args = [
     "generate",
     "-i",
-    specUrl,
+    resolvedSpec,
     "-g",
     target.generator,
     "-o",

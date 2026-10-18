@@ -13,6 +13,7 @@
 import { execSync } from 'node:child_process';
 
 const DEFAULT_SPEC_URL = 'https://api.komikhq.com/openapi.json';
+const BROWSER_USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
 
 function run(cmd: string): string {
   return execSync(cmd, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
@@ -26,7 +27,7 @@ async function main() {
   // 1. Check HTTP Status Code
   let httpStatus: string;
   try {
-    httpStatus = run(`curl -s -o /dev/null -w "%{http_code}" "${specUrl}"`);
+    httpStatus = run(`curl -s -o /dev/null -w "%{http_code}" -A "${BROWSER_USER_AGENT}" "${specUrl}"`);
   } catch (err: unknown) {
     const error = err as Error;
     console.error(`❌ Network error while reaching spec URL: ${error.message}`);
@@ -43,7 +44,7 @@ async function main() {
   // 2. Fetch and Validate JSON Structure
   let rawJson: string;
   try {
-    rawJson = run(`curl -sS "${specUrl}"`);
+    rawJson = run(`curl -sS -A "${BROWSER_USER_AGENT}" "${specUrl}"`);
   } catch (err: unknown) {
     const error = err as Error;
     console.error(`❌ Failed to fetch OpenAPI payload: ${error.message}`);
