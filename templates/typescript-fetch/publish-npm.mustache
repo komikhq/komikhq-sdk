@@ -3,6 +3,7 @@ name: Publish to npmjs
 on:
   release:
     types: [published]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -22,7 +23,7 @@ jobs:
           registry-url: "https://registry.npmjs.org"
 
       - name: Install Dependencies
-        run: npm ci
+        run: npm install
 
       - name: Build Package
         run: npm run build

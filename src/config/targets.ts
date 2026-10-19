@@ -23,7 +23,7 @@ export const TARGETS: Record<TargetKey, GeneratorTarget> = {
     gitRepoId: "komikhq-typescript",
     additionalProperties: {
       npmName: "@komikhq/komikhq-typescript",
-      npmVersion: "1.0.0",
+      npmVersion: "1.1.0",
       typescriptThreePlus: "true",
       supportsES6: "true",
       modelPropertyNaming: "camelCase",
