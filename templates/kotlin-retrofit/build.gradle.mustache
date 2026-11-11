@@ -49,6 +49,7 @@ buildscript {
         classpath "org.jetbrains.kotlin:kotlin-serialization:$kotlin_version"
         {{/kotlinx_serialization}}
         classpath "com.diffplug.spotless:spotless-plugin-gradle:$spotless_version"
+        classpath "com.vanniktech:gradle-maven-publish-plugin:0.30.0"
         {{#moshiCodeGen}}
         classpath "com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin:2.3.10"
         {{/moshiCodeGen}}
@@ -68,8 +69,7 @@ apply plugin: 'kotlinx-serialization'
 {{#idea}}
 apply plugin: 'idea'
 {{/idea}}
-apply plugin: 'maven-publish'
-apply plugin: 'signing'
+apply plugin: 'com.vanniktech.maven.publish'
 apply plugin: 'com.diffplug.spotless'
 {{^useSettingsGradle}}
 
@@ -238,48 +238,37 @@ dependencies {
     {{/jvm-spring}}
 }
 
-java {
-    withSourcesJar()
-    withJavadocJar()
-}
+mavenPublishing {
+    publishToMavenCentral(com.vanniktech.maven.publish.SonatypeHost.CENTRAL_PORTAL)
+    signAllPublications()
 
-publishing {
-    publications {
-        maven(MavenPublication) {
-            groupId = '{{groupId}}'
-            artifactId = '{{artifactId}}'
-            version = '{{artifactVersion}}'
-            from components.java
+    coordinates("{{groupId}}", "{{artifactId}}", "{{artifactVersion}}")
 
-            pom {
-                name = 'KomikHQ Android Client SDK'
-                description = 'Official KomikHQ Client SDK for Android / Kotlin powered by Retrofit2 & Coroutines'
-                url = 'https://github.com/komikhq/komikhq-android-sdk'
+    pom {
+        name = 'KomikHQ Android Client SDK'
+        description = 'Official KomikHQ Client SDK for Android / Kotlin powered by Retrofit2 & Coroutines'
+        inceptionYear = '2026'
+        url = 'https://github.com/komikhq/komikhq-android-sdk'
 
-                licenses {
-                    license {
-                        name = 'The Apache License, Version 2.0'
-                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                    }
-                }
-                developers {
-                    developer {
-                        id = 'komikhq'
-                        name = 'KomikHQ Team'
-                        email = 'dev@komikhq.com'
-                    }
-                }
-                scm {
-                    connection = 'scm:git:git://github.com/komikhq/komikhq-android-sdk.git'
-                    developerConnection = 'scm:git:ssh://github.com:komikhq/komikhq-android-sdk.git'
-                    url = 'https://github.com/komikhq/komikhq-android-sdk'
-                }
+        licenses {
+            license {
+                name = 'The Apache License, Version 2.0'
+                url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                distribution = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
             }
         }
+        developers {
+            developer {
+                id = 'komikhq'
+                name = 'KomikHQ Team'
+                email = 'dev@komikhq.com'
+                url = 'https://github.com/komikhq'
+            }
+        }
+        scm {
+            url = 'https://github.com/komikhq/komikhq-android-sdk'
+            connection = 'scm:git:git://github.com/komikhq/komikhq-android-sdk.git'
+            developerConnection = 'scm:git:ssh://github.com:komikhq/komikhq-android-sdk.git'
+        }
     }
-}
-
-signing {
-    useGpgCmd()
-    sign publishing.publications.maven
 }
