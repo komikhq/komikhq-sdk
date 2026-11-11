@@ -69,6 +69,7 @@ apply plugin: 'kotlinx-serialization'
 apply plugin: 'idea'
 {{/idea}}
 apply plugin: 'maven-publish'
+apply plugin: 'signing'
 apply plugin: 'com.diffplug.spotless'
 {{^useSettingsGradle}}
 
@@ -239,6 +240,7 @@ dependencies {
 
 java {
     withSourcesJar()
+    withJavadocJar()
 }
 
 publishing {
@@ -248,6 +250,36 @@ publishing {
             artifactId = '{{artifactId}}'
             version = '{{artifactVersion}}'
             from components.java
+
+            pom {
+                name = 'KomikHQ Android Client SDK'
+                description = 'Official KomikHQ Client SDK for Android / Kotlin powered by Retrofit2 & Coroutines'
+                url = 'https://github.com/komikhq/komikhq-android-sdk'
+
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'komikhq'
+                        name = 'KomikHQ Team'
+                        email = 'dev@komikhq.com'
+                    }
+                }
+                scm {
+                    connection = 'scm:git:git://github.com/komikhq/komikhq-android-sdk.git'
+                    developerConnection = 'scm:git:ssh://github.com:komikhq/komikhq-android-sdk.git'
+                    url = 'https://github.com/komikhq/komikhq-android-sdk'
+                }
+            }
         }
     }
+}
+
+signing {
+    useGpgCmd()
+    sign publishing.publications.maven
 }
