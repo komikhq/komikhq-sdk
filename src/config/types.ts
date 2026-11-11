@@ -1,4 +1,4 @@
-export type TargetKey = "typescript" | "php";
+export type TargetKey = "typescript" | "php" | "android";
 
 export interface GeneratorTarget {
   /** Human readable name of the target SDK */

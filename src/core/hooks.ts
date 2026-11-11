@@ -73,5 +73,49 @@ export function afterGenerate(target: GeneratorTarget): void {
         npmPackageName: "@komikhq/komikhq-typescript",
       });
     }
+  } else if (target.generator === "kotlin") {
+    const kotlinGitAttributes = `# Gitattributes for KomikHQ Android/Kotlin SDK
+/.github export-ignore
+/.gitattributes export-ignore
+/.gitignore export-ignore
+/docs export-ignore
+`;
+    fs.writeFileSync(path.resolve(target.outputDir, ".gitattributes"), kotlinGitAttributes);
+
+    const kotlinGitIgnore = `*.class
+.gradle/
+build/
+.idea/
+*.iml
+local.properties
+.DS_Store
+`;
+    fs.writeFileSync(path.resolve(target.outputDir, ".gitignore"), kotlinGitIgnore);
+
+    // Make gradlew executable if present
+    const gradlewPath = path.resolve(target.outputDir, "gradlew");
+    if (fs.existsSync(gradlewPath)) {
+      try {
+        fs.chmodSync(gradlewPath, 0o755);
+      } catch {
+        // Ignored on platforms not supporting chmod
+      }
+    }
+
+    // Render downstream publish workflow using Mustache template
+    const publishTemplate = path.resolve(
+      ROOT_DIR,
+      "templates/kotlin-retrofit/publish-maven.mustache"
+    );
+    const publishWorkflowOut = path.resolve(
+      target.outputDir,
+      ".github/workflows/publish-package.yml"
+    );
+
+    if (fs.existsSync(publishTemplate)) {
+      renderTemplateFile(publishTemplate, publishWorkflowOut, {
+        artifactName: target.additionalProperties.artifactId || "komikhq-android-sdk",
+      });
+    }
   }
 }

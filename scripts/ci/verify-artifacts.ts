@@ -49,6 +49,16 @@ const TARGET_RULES: Record<string, CheckRule[]> = {
     { path: 'lib/Model', description: 'Models and DTOs directory', isDirectory: true },
     { path: 'test', description: 'Unit test suite directory', isDirectory: true },
   ],
+  android: [
+    { path: 'build.gradle', description: 'Gradle build configuration' },
+    { path: 'settings.gradle', description: 'Gradle settings' },
+    { path: 'gradlew', description: 'Gradle wrapper script' },
+    { path: '.gitattributes', description: 'Git export-ignore rules' },
+    { path: '.gitignore', description: 'Git ignore rules' },
+    { path: '.github/workflows/publish-package.yml', description: 'Publish package CI workflow' },
+    { path: 'README.md', description: 'SDK documentation' },
+    { path: 'src/main/kotlin', description: 'Kotlin source directory', isDirectory: true },
+  ],
 };
 
 async function main() {

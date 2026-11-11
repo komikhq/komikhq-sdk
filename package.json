@@ -9,6 +9,7 @@
     "generate:all": "tsx src/index.ts all",
     "generate:ts": "tsx src/index.ts typescript",
     "generate:php": "tsx src/index.ts php",
+    "generate:android": "tsx src/index.ts android",
     "typecheck": "tsc --noEmit",
     "check:spec": "tsx scripts/ci/check-spec.ts",
     "audit:branding": "tsx scripts/audit-branding.ts",

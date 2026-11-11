@@ -13,9 +13,10 @@ Usage:
   tsx src/index.ts [target] [options]
 
 Available Targets:
-  all           Generate all configured SDKs (typescript, php)
+  all           Generate all configured SDKs (typescript, php, android)
   typescript    TypeScript Fetch SDK -> out/typescript (@komikhq/komikhq-typescript)
   php           PHP SDK -> out/php (komikhq/komikhq-php)
+  android       Android Kotlin SDK -> out/android (komikhq-android-sdk)
 
 Options:
   --spec <url>  OpenAPI JSON specification URL or local file path
