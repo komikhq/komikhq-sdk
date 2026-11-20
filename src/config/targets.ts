@@ -34,7 +34,7 @@ export const TARGETS: Record<TargetKey, GeneratorTarget> = {
     gitRepoId: "komikhq-typescript",
     additionalProperties: {
       npmName: "@komikhq/komikhq-typescript",
-      npmVersion: "1.2.0",
+      npmVersion: "1.2.1",
       typescriptThreePlus: "true",
       supportsES6: "true",
       modelPropertyNaming: "camelCase",
@@ -85,7 +85,7 @@ export const TARGETS: Record<TargetKey, GeneratorTarget> = {
       packageName: "com.komikhq.sdk",
       groupId: "com.komikhq",
       artifactId: "komikhq-android-sdk",
-      artifactVersion: "1.2.0",
+      artifactVersion: "1.2.1",
       enumPropertyNaming: "UPPERCASE",
       dateLibrary: "java8",
       sortModelPropertiesByRequiredFlag: "true",
