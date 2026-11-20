@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { ROOT_DIR, DEFAULT_SPEC_URL, TARGETS, type TargetKey } from "../config/index.ts";
 import { beforeGenerate, afterGenerate } from "./hooks.ts";
+import { processAndSanitizeSpec } from "./spec-processor.ts";
 
 export interface RunOptions {
   specUrl?: string;
@@ -36,10 +37,9 @@ export async function runGenerator(
   // Execute pre-generation lifecycle hooks
   beforeGenerate(target);
 
-  let resolvedSpec = specUrl;
+  let rawSpecContent = "";
   if (specUrl.startsWith("http://") || specUrl.startsWith("https://")) {
-    const tempSpecPath = path.resolve(ROOT_DIR, ".openapi-spec.json");
-    console.log(`>> Fetching OpenAPI spec with KomikHQ-Bot User-Agent...`);
+    console.log(`>> Fetching OpenAPI spec with KomikHQ-Bot User-Agent from ${specUrl}...`);
     const userAgent = "KomikHQ-Bot";
     const res = await fetch(specUrl, {
       headers: {
@@ -50,10 +50,23 @@ export async function runGenerator(
     if (!res.ok) {
       throw new Error(`Failed to download OpenAPI spec from ${specUrl}: HTTP ${res.status} ${res.statusText}`);
     }
-    const specContent = await res.text();
-    fs.writeFileSync(tempSpecPath, specContent, "utf-8");
-    resolvedSpec = tempSpecPath;
+    rawSpecContent = await res.text();
+  } else {
+    rawSpecContent = fs.readFileSync(path.resolve(process.cwd(), specUrl), "utf-8");
   }
+
+  // Parse and sanitize specification with path exclusion filter
+  const parsedJson = JSON.parse(rawSpecContent);
+  const { sanitizedSpec, excludedPaths } = processAndSanitizeSpec(parsedJson);
+
+  if (excludedPaths.length > 0) {
+    console.log(`>> [Spec Processor] Excluded ${excludedPaths.length} non-REST path(s):`);
+    excludedPaths.forEach((p) => console.log(`   - ${p}`));
+  }
+
+  const tempSpecPath = path.resolve(ROOT_DIR, ".openapi-spec.json");
+  fs.writeFileSync(tempSpecPath, JSON.stringify(sanitizedSpec, null, 2), "utf-8");
+  const resolvedSpec = tempSpecPath;
 
   const props = Object.entries(target.additionalProperties)
     .map(([key, val]) => `${key}=${val}`)

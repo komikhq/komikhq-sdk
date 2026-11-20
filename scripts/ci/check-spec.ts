@@ -12,7 +12,7 @@
 
 import { execSync } from 'node:child_process';
 
-const DEFAULT_SPEC_URL = 'https://api.komikhq.com/openapi.json';
+const DEFAULT_SPEC_URL = 'https://nitro.komikhq.dpdns.org/_openapi.json';
 const KOMIKHQ_BOT_USER_AGENT = 'KomikHQ-Bot';
 
 function run(cmd: string): string {

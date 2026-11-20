@@ -10,7 +10,18 @@ export const ROOT_DIR = path.resolve(__dirname, "../../");
 
 // Default OpenAPI Specification URL from production
 export const DEFAULT_SPEC_URL =
-  process.env.OPENAPI_SPEC_URL || "https://api.komikhq.com/openapi.json";
+  process.env.OPENAPI_SPEC_URL || "https://nitro.komikhq.dpdns.org/_openapi.json";
+
+// Default paths to exclude from generated client SDKs
+export const DEFAULT_EXCLUDED_PATTERNS = [
+  "/realtime/**", // Pure Cloudflare Durable Objects WebSocket streaming, not REST
+  "/auth/**",     // Managed natively by Better Auth client SDK
+  "/_openapi.json",
+  "/docs",
+  "/swagger",
+  "/{*param1}",
+  "/",
+];
 
 export const TARGETS: Record<TargetKey, GeneratorTarget> = {
   typescript: {
@@ -23,7 +34,7 @@ export const TARGETS: Record<TargetKey, GeneratorTarget> = {
     gitRepoId: "komikhq-typescript",
     additionalProperties: {
       npmName: "@komikhq/komikhq-typescript",
-      npmVersion: "1.1.1",
+      npmVersion: "1.2.0",
       typescriptThreePlus: "true",
       supportsES6: "true",
       modelPropertyNaming: "camelCase",
@@ -74,7 +85,7 @@ export const TARGETS: Record<TargetKey, GeneratorTarget> = {
       packageName: "com.komikhq.sdk",
       groupId: "com.komikhq",
       artifactId: "komikhq-android-sdk",
-      artifactVersion: "1.0.0",
+      artifactVersion: "1.2.0",
       enumPropertyNaming: "UPPERCASE",
       dateLibrary: "java8",
       sortModelPropertiesByRequiredFlag: "true",
